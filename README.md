@@ -28,86 +28,22 @@
 - ☁️ 轻量后端代理：通过 Cloudflare Pages Functions 统一聚合各数据源并处理音频跨域。
 - 🔒 锁屏播放控制：锁屏界面自动显示专辑封面与播放控件，无需解锁即可进行播放控制。
 - 🛠️ 调试控制台：按下 Ctrl + D 呼出实时日志面板，便于排查接口或交互异常。
-
-## 🚀 快速上手
-根据使用的托管平台，推荐使用 Cloudflare Pages 进行部署：
-
-### ✅ Cloudflare Pages
-1. Fork 或克隆本仓库。
-2. 按照 Cloudflare Pages 文档创建站点，并将本仓库作为构建来源或直接上传静态资源。
-3. 部署完成后，通过 Cloudflare Pages 分配的域名访问站点即可体验播放器。
-
-## ⚙️ 配置提示
-- API 基地址定义在 functions/proxy.ts 中的第1行，可替换为自建接口域名。
-- 默认主题、播放模式等偏好可在 `state` 初始化逻辑中按需调整。
-
-### ☁️ Cloudflare D1 绑定与建表
-1. 在 Cloudflare Dashboard 的 **Workers & Pages → D1 → Create** 中新建数据库，建议命名为 `solara-db`（名称可自定）。
-2. 打开 Pages 项目设置，依次进入 **Settings → Functions → Bindings → Add binding → D1 Database**：
-   - **Binding name** 填写 `DB`（必须与 `functions/api/storage.ts` 中的环境变量一致）。
-   - **D1 Database** 选择上一步创建的数据库并保存。
-3. 在数据库详情页切换到 **Query** 标签页，执行下方建表语句初始化两个独立的键值存储表（播放数据与收藏数据分离）：
-   ```sql
-   CREATE TABLE IF NOT EXISTS playback_store (
-     key TEXT PRIMARY KEY,
-     value TEXT,
-     updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-   );
-
-   CREATE TABLE IF NOT EXISTS favorites_store (
-     key TEXT PRIMARY KEY,
-     value TEXT,
-     updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-   );
-   ```
-4. 重新部署或预览站点。前端会优先检测 D1 绑定：播放状态、播放列表等写入 `playback_store`，收藏相关写入 `favorites_store`；未绑定时自动退回浏览器 localStorage。
-
 ## 🧭 探索雷达
 - 探索雷达会在「流行、摇滚、古典音乐、民谣、电子、爵士、说唱、乡村、蓝调、R&B、金属、嘻哈、轻音乐」等分类中随机挑选关键词，自动为播放列表补充新歌。
-- 如果想排除某些不喜欢的分类，可在 `js/index.js` 中的 `EXPLORE_RADAR_GENRES` 数组里删除对应条目或新增自己喜欢的分类，保存后重新部署即可生效。
+## 📌 项目来源
+本项目基于原仓库 [akudamatata/Solara](https://github.com/akudamatata/Solara) 进行 Docker 化改造，
+保留原有播放器功能，并补充了 Node/Docker 部署方式。
+## 🎶 Docker部署
+- docker pull dgg788/solara:latest
+- docker run -d \
+--name solara \
+-p 3003:3001 \
+-e PORT=3001 \
+-e PASSWORD="" \
+--restart unless-stopped \
+dgg788/solara:latest
 
-## 🔐 访问控制设置
-- **Cloudflare Pages：** 在项目的 **Settings → Functions → Environment variables** 中新增名为 `PASSWORD` 的环境变量，值为希望设置的访问口令。
-- 部署完成后，未登录的访问者会被自动重定向到 `/login` 页面并需输入该口令；若想关闭访问口令，删除该环境变量并重新部署即可。
-## 🎵 使用流程
-1. 输入关键词并选择想要的曲库后发起搜索。
-2. 在结果列表中可试听、播放、下载或加入播放队列。
-3. 点击列表中的心形图标即可收藏歌曲，收藏列表支持快捷下载、添加至播放列表或批量清空。
-4. 右侧播放/收藏列表展示当前曲目，可拖动播放、移除或一键清空。
-5. 底部控制栏提供播放控制、播放模式切换、进度条与音量滑块。
-6. 打开歌词面板即可查看实时滚动的高亮歌词。
-
-## 📱 移动端体验提示
-- 将网页添加到手机主屏或通过移动浏览器访问，即可自动切换至竖屏布局；
-- 底栏控件重新排布，保证竖向滑动不遮挡核心信息；
-- 点击封面可以切换到歌词面板，可通过点击展开/收起。
-
-## ❓ 常见问题解答
-- **搜索没有结果怎么办？** 检查浏览器控制台日志，如接口被阻挡可尝试切换数据源或更新 `API.baseUrl` 至可用服务，很有可能是免费API炸了。
-- **如何重置本地数据？** 在浏览器开发者工具的 Application / Storage 面板清理 `localStorage`，即可恢复默认播放列表和配置。
-- **收藏或播放列表如何备份？** 使用播放队列或收藏列表顶部的「导出」按钮生成 JSON 文件，日后可通过对应列表的「导入」按钮恢复，同时可一键将收藏歌曲添加回播放列表。
-
-## 🗂️ 项目结构
-```
-Music-Player/
-├── css/
-│   ├── desktop.css   # 桌面端布局与组件样式
-│   ├── mobile.css    # 移动端适配样式
-│   └── style.css     # 公共主题与变量定义
-├── functions/
-│   ├── _middleware.ts # Cloudflare Pages Functions 中间件
-│   ├── api/           # 各曲库代理函数入口
-│   ├── lib/           # 请求封装与工具模块
-│   ├── palette.ts     # 封面取色算法
-│   └── proxy.ts       # 音频直链代理
-├── js/
-│   ├── index.js       # 播放器核心逻辑、状态管理与探索雷达分类
-│   └── mobile.js      # 移动端交互与事件处理
-├── favicon.png
-├── favicon.svg
-├── index.html         # 主界面结构、资源引入与配置项
-├── login.html         # 访问控制登录页
-└── README.md          # 项目说明
+- 默认不带密码为空，如需带密码：PASSWORD="123456"
 ```
 
 ## 📄 许可证

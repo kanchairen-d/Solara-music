@@ -34,8 +34,9 @@
 本项目基于原仓库 [akudamatata/Solara](https://github.com/akudamatata/Solara) 进行 Docker 化改造，
 保留原有播放器功能，并补充了 Node/Docker 部署方式。
 ## 🎶 Docker部署
-- 飞牛docker商店搜:dgg788/solara
-- docker pull dgg788/solara:latest
+- 方法1：飞牛Docker商店搜:dgg788/solara
+- 方法2：docker pull ghcr.io/kanchairen-d/solara:latest
+- 方法2：docker pull dgg788/solara:latest
 - docker run -d \
 --name solara \
 -p 3003:3001 \
@@ -45,7 +46,7 @@
 dgg788/solara:latest
 
 - 默认不带密码为空，如需带密码：PASSWORD="123456"
-```
 
-## 📄 许可证
+ 
+ ## 📄 许可证
 本项目采用 CC BY-NC-SA 协议，禁止任何商业化行为，任何衍生项目必须保留本项目地址并以相同协议开源。
